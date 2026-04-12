@@ -18,7 +18,11 @@ import {
   Settings as SettingsIcon,
   Home as HomeIcon,
   Trash2,
-  Clock
+  Clock,
+  ExternalLink,
+  Database,
+  BookOpen,
+  Salad
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
@@ -32,7 +36,36 @@ interface HistoryItem {
   timestamp: number;
 }
 
-type View = 'home' | 'history' | 'settings' | 'privacy' | 'terms';
+type View = 'home' | 'resources' | 'history' | 'settings' | 'privacy' | 'terms';
+
+interface VeganProduct {
+  code: string;
+  product_name: string;
+  brands?: string;
+  image_front_small_url?: string;
+  nutriscore_grade?: string;
+}
+
+interface VeganMeal {
+  idMeal: string;
+  strMeal: string;
+  strMealThumb: string;
+}
+
+interface VeganApiResource {
+  name: string;
+  summary: string;
+  endpoint: string;
+  auth: string;
+  docs: string;
+}
+
+interface VeganKnowledgeResource {
+  title: string;
+  value: string;
+  sourceLabel: string;
+  sourceUrl: string;
+}
 
 interface UserSettings {
   provider: AIProvider;
@@ -62,6 +95,57 @@ const MODEL_PRESETS: Record<AIProvider, string[]> = {
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini']
 };
 
+const VEGAN_API_RESOURCES: VeganApiResource[] = [
+  {
+    name: 'Open Food Facts',
+    summary: 'Open global food product data with vegan tags, nutrition labels, and ingredient text.',
+    endpoint: 'https://world.openfoodfacts.org/api/v2/search?categories_tags_en=vegan',
+    auth: 'No key required',
+    docs: 'https://openfoodfacts.github.io/openfoodfacts-server/api/'
+  },
+  {
+    name: 'TheMealDB',
+    summary: 'Simple recipe feed you can filter by category, including vegan recipes.',
+    endpoint: 'https://www.themealdb.com/api/json/v1/1/filter.php?c=Vegan',
+    auth: 'No key required',
+    docs: 'https://www.themealdb.com/api.php'
+  },
+  {
+    name: 'USDA FoodData Central',
+    summary: 'Official US nutrition data for ingredients and packaged foods.',
+    endpoint: 'https://api.nal.usda.gov/fdc/v1/foods/search?query=tofu',
+    auth: 'Free API key required',
+    docs: 'https://fdc.nal.usda.gov/api-guide.html'
+  }
+];
+
+const VEGAN_KNOWLEDGE_RESOURCES: VeganKnowledgeResource[] = [
+  {
+    title: 'Vitamin B12',
+    value: 'Use fortified foods or supplements regularly on vegan diets.',
+    sourceLabel: 'NIH ODS',
+    sourceUrl: 'https://ods.od.nih.gov/factsheets/VitaminB12-HealthProfessional/'
+  },
+  {
+    title: 'Iron Absorption',
+    value: 'Pair plant iron sources with vitamin C foods to improve absorption.',
+    sourceLabel: 'NIH ODS',
+    sourceUrl: 'https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/'
+  },
+  {
+    title: 'Calcium',
+    value: 'Calcium-set tofu and fortified milks can help cover daily needs.',
+    sourceLabel: 'NIH ODS',
+    sourceUrl: 'https://ods.od.nih.gov/factsheets/Calcium-HealthProfessional/'
+  },
+  {
+    title: 'Protein Sources',
+    value: 'Legumes, soy foods, seitan, nuts, and seeds cover protein well.',
+    sourceLabel: 'Dietary Guidelines',
+    sourceUrl: 'https://www.dietaryguidelines.gov/'
+  }
+];
+
 export default function App() {
   const [view, setView] = useState<View>('home');
   const [image, setImage] = useState<string | null>(null);
@@ -79,12 +163,50 @@ export default function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistStatus, setWaitlistStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [veganProducts, setVeganProducts] = useState<VeganProduct[]>([]);
+  const [veganMeals, setVeganMeals] = useState<VeganMeal[]>([]);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
+  const [resourcesError, setResourcesError] = useState<string | null>(null);
+  const [resourcesLoaded, setResourcesLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadHistory();
     void loadSettings();
   }, []);
+
+  useEffect(() => {
+    if ((view === 'home' || view === 'resources') && !resourcesLoaded && !resourcesLoading) {
+      void loadResourceFeeds();
+    }
+  }, [view, resourcesLoaded, resourcesLoading]);
+
+  const loadResourceFeeds = async () => {
+    setResourcesLoading(true);
+    setResourcesError(null);
+    try {
+      const [productsResponse, mealsResponse] = await Promise.all([
+        fetch('https://world.openfoodfacts.org/api/v2/search?categories_tags_en=vegan&fields=code,product_name,brands,image_front_small_url,nutriscore_grade&page_size=8'),
+        fetch('https://www.themealdb.com/api/json/v1/1/filter.php?c=Vegan')
+      ]);
+
+      if (!productsResponse.ok || !mealsResponse.ok) {
+        throw new Error('Failed to fetch resource feeds');
+      }
+
+      const productsJson = (await productsResponse.json()) as { products?: VeganProduct[] };
+      const mealsJson = (await mealsResponse.json()) as { meals?: VeganMeal[] };
+
+      setVeganProducts((productsJson.products || []).filter((item) => item.product_name).slice(0, 6));
+      setVeganMeals((mealsJson.meals || []).slice(0, 6));
+      setResourcesLoaded(true);
+    } catch (e) {
+      console.error(e);
+      setResourcesError('Could not load live vegan resources right now. External APIs may be rate-limited.');
+    } finally {
+      setResourcesLoading(false);
+    }
+  };
 
   const mergeSettings = (parsed: Partial<UserSettings>): UserSettings => ({
     ...DEFAULT_SETTINGS,
@@ -504,6 +626,147 @@ export default function App() {
     </motion.div>
   );
 
+  const renderResources = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-10"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-display font-bold text-stone-900">Vegan Resource Hub</h2>
+          <p className="text-stone-600 max-w-2xl">
+            Free vegan-friendly APIs, live food and recipe samples, and nutrition references you can use today.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void loadResourceFeeds()}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-stone-200 text-stone-700 rounded-xl font-semibold hover:bg-stone-50 transition-colors"
+        >
+          <RefreshCw size={16} className={resourcesLoading ? 'animate-spin' : ''} />
+          Refresh Feeds
+        </button>
+      </div>
+
+      {resourcesError && (
+        <div className="p-4 bg-amber-50 text-amber-700 border border-amber-200 rounded-2xl text-sm font-medium">
+          {resourcesError}
+        </div>
+      )}
+
+      <section className="bg-white rounded-3xl border border-stone-100 p-6 sm:p-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
+            <Database size={20} />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-stone-900">Free Vegan API Directory</h3>
+            <p className="text-sm text-stone-500">Quick-start endpoints and docs links.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {VEGAN_API_RESOURCES.map((resource) => (
+            <article key={resource.name} className="rounded-2xl border border-stone-200 bg-stone-50 p-4 space-y-3">
+              <h4 className="font-bold text-stone-900">{resource.name}</h4>
+              <p className="text-sm text-stone-600">{resource.summary}</p>
+              <p className="text-xs text-stone-500"><span className="font-semibold text-stone-700">Auth:</span> {resource.auth}</p>
+              <a href={resource.endpoint} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-700 font-semibold break-all hover:underline">
+                {resource.endpoint}
+              </a>
+              <a href={resource.docs} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-brand-700 font-semibold hover:underline">
+                API Docs <ExternalLink size={14} />
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-3xl border border-stone-100 p-6 sm:p-8 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
+              <Salad size={20} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-stone-900">Live Vegan Product Feed</h3>
+              <p className="text-sm text-stone-500">Sampled from Open Food Facts.</p>
+            </div>
+          </div>
+          {resourcesLoading && veganProducts.length === 0 ? (
+            <div className="py-8 text-sm text-stone-500">Loading product data...</div>
+          ) : (
+            <div className="space-y-3">
+              {veganProducts.map((product) => (
+                <article key={product.code} className="rounded-2xl border border-stone-200 p-3 bg-stone-50 flex gap-3">
+                  <div className="w-16 h-16 rounded-xl bg-white border border-stone-200 overflow-hidden shrink-0">
+                    {product.image_front_small_url ? (
+                      <img src={product.image_front_small_url} alt={product.product_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-sm text-stone-900 line-clamp-2">{product.product_name}</h4>
+                    <p className="text-xs text-stone-500 mt-1">{product.brands || 'Brand unavailable'}</p>
+                    <p className="text-xs text-stone-600 mt-1">Nutri-Score: {product.nutriscore_grade?.toUpperCase() || 'N/A'}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-3xl border border-stone-100 p-6 sm:p-8 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
+              <ChefHat size={20} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-stone-900">Live Vegan Recipe Feed</h3>
+              <p className="text-sm text-stone-500">Sampled from TheMealDB.</p>
+            </div>
+          </div>
+          {resourcesLoading && veganMeals.length === 0 ? (
+            <div className="py-8 text-sm text-stone-500">Loading vegan recipe ideas...</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {veganMeals.map((meal) => (
+                <article key={meal.idMeal} className="rounded-2xl border border-stone-200 p-3 bg-stone-50 space-y-2">
+                  <div className="aspect-video rounded-xl overflow-hidden bg-stone-100">
+                    <img src={meal.strMealThumb} alt={meal.strMeal} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-stone-900 line-clamp-2">{meal.strMeal}</h4>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-white rounded-3xl border border-stone-100 p-6 sm:p-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
+            <BookOpen size={20} />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-stone-900">Nutrition Knowledge Pack</h3>
+            <p className="text-sm text-stone-500">Practical vegan nutrition reminders with source links.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {VEGAN_KNOWLEDGE_RESOURCES.map((item) => (
+            <article key={item.title} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+              <h4 className="font-bold text-stone-900">{item.title}</h4>
+              <p className="text-sm text-stone-600 mt-1">{item.value}</p>
+              <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm text-brand-700 font-semibold hover:underline">
+                {item.sourceLabel} <ExternalLink size={14} />
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    </motion.div>
+  );
+
   const renderSettings = () => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -822,6 +1085,12 @@ export default function App() {
             >
               <HomeIcon size={18} /> Home
             </button>
+            <button
+              onClick={() => setView('resources')}
+              className={`flex items-center gap-1.5 transition-colors ${view === 'resources' ? 'text-brand-600' : 'hover:text-brand-600'}`}
+            >
+              <Database size={18} /> Resources
+            </button>
             <button 
               onClick={() => setView('history')}
               className={`flex items-center gap-1.5 transition-colors ${view === 'history' ? 'text-brand-600' : 'hover:text-brand-600'}`}
@@ -841,6 +1110,7 @@ export default function App() {
       <main className="max-w-5xl mx-auto px-4 py-12">
         <AnimatePresence mode="wait">
           {view === 'home' && renderHome()}
+          {view === 'resources' && renderResources()}
           {view === 'history' && renderHistory()}
           {view === 'settings' && renderSettings()}
           {view === 'privacy' && renderPrivacy()}
@@ -926,6 +1196,13 @@ export default function App() {
         >
           <HistoryIcon size={20} />
           <span className="text-[10px] font-bold uppercase tracking-wider">History</span>
+        </button>
+        <button
+          onClick={() => setView('resources')}
+          className={`flex flex-col items-center gap-1 transition-colors ${view === 'resources' ? 'text-brand-600' : 'text-stone-400'}`}
+        >
+          <Database size={20} />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Resources</span>
         </button>
         <button 
           onClick={() => setView('settings')}
