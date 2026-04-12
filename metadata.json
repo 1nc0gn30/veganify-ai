@@ -1,0 +1,5 @@
+{
+  "name": "Veganify AI",
+  "description": "Transform any non-vegan dish into a delicious plant-based masterpiece using AI-powered image recognition and recipe generation.",
+  "requestFramePermissions": ["camera"]
+}
