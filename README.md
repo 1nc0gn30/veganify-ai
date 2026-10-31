@@ -12,7 +12,6 @@ View your app in AI Studio: https://ai.studio/apps/5e63e895-e090-4df2-be9a-1c9d6
 
 **Prerequisites:**  Node.js
 
-
 1. Install dependencies:
    `npm install`
 2. Open Settings in the app and add your own BYOK API key (Gemini or OpenAI).
