@@ -3,34 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Veganify AI</title>
-      <meta name="description" content="Transform any non-vegan dish into a delicious plant-based masterpiece using AI-powered image recognition and recipe generation." />
+    <title>Veganify AI — Offline Plant-Based Recipe Converter & Substitution Matrix</title>
+    <meta
+      name="description"
+      content="Convert any non-vegan dish or ingredient list into an exact plant-based recipe offline in your browser. Includes a 65-ingredient substitution matrix, soy-free/nut-free/gluten-free routing, culinary chemistry notes, and Markdown export."
+    />
     <meta name="author" content="Neal Frazier" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#0b0f19" />
+    <meta name="theme-color" content="#FAF8F3" />
     <link rel="canonical" href="https://veganify-ai.nealfrazier.tech/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- OpenGraph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Veganify AI" />
-    <meta property="og:title" content="Veganify AI" />
-    <meta property="og:description" content="Transform any non-vegan dish into a delicious plant-based masterpiece using AI-powered image recognition and recipe generation." />
+    <meta property="og:title" content="Veganify AI — Plant-Based Recipe Converter & Culinary Matrix" />
+    <meta
+      property="og:description"
+      content="Convert any non-vegan dish into a plant-based recipe offline with 65+ verified swaps, allergen-free routing, and cooking technique adjustments."
+    />
     <meta property="og:url" content="https://veganify-ai.nealfrazier.tech/" />
-    <meta property="og:image" content="https://veganify-ai.nealfrazier.tech/og-image.svg" />
-    <meta property="og:image:alt" content="Veganify AI preview image" />
+    <meta property="og:image" content="https://veganify-ai.nealfrazier.tech/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Veganify AI — Botanical Test Kitchen Plant-Based Recipe Converter" />
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Veganify AI" />
-    <meta name="twitter:description" content="Transform any non-vegan dish into a delicious plant-based masterpiece using AI-powered image recognition and recipe generation." />
-    <meta name="twitter:image" content="https://veganify-ai.nealfrazier.tech/og-image.svg" />
+    <meta name="twitter:site" content="@1nc0gn30" />
+    <meta name="twitter:creator" content="@1nc0gn30" />
+    <meta name="twitter:title" content="Veganify AI — Plant-Based Recipe Converter & Culinary Matrix" />
+    <meta
+      name="twitter:description"
+      content="Deterministic offline recipe converter with 65+ plant-based swaps, allergen toggles, and culinary chemistry notes."
+    />
+    <meta name="twitter:image" content="https://veganify-ai.nealfrazier.tech/og-image.png" />
+
+    <!-- AEO & SEO Structured Data Graph -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "name": "Veganify AI",
+            "url": "https://veganify-ai.nealfrazier.tech/",
+            "description": "Free offline plant-based recipe transformation engine and 65-ingredient culinary substitution matrix with soy-free, nut-free, and gluten-free routing plus optional BYOK photo vision.",
+            "applicationCategory": "LifestyleApplication",
+            "operatingSystem": "Any (Web Browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "creator": {
+              "@type": "Person",
+              "name": "Neal Frazier",
+              "alternateName": "Neal Frazier Tech",
+              "url": "https://nealfrazier.tech",
+              "sameAs": [
+                "https://github.com/1nc0gn30",
+                "https://nullai.tech"
+              ]
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Does Veganify AI require an API key or account to convert recipes?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The core Dish & Ingredient-List Converter and 65-ingredient Substitution Matrix run 100% offline in your browser with zero API keys, accounts, or paywalls. Optional BYOK Gemini or OpenAI photo analysis is available in the Photo BYOK tab."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does Veganify AI handle soy, nut, and gluten allergies?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Toggling Soy-Free, Nut-Free, or Gluten-Free dynamically routes every animal-derived ingredient to an allergen-compliant plant substitute—for example switching cashew cream to oat cream or firm tofu to chickpea/mushroom alternatives—and adjusts cooking technique tips accordingly."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is my recipe history or optional API key stored on external servers?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Saved cookbook recipes live solely in your browser's localStorage and can be exported as Markdown files or printed directly. Optional BYOK keys stay local and support AES-256-GCM passphrase encryption."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <form name="waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
-      <input type="hidden" name="form-name" value="waitlist" />
-      <input type="email" name="email" />
-      <input type="text" name="bot-field" />
-    </form>
-
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
